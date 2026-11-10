@@ -1,4 +1,18 @@
-const { useState } = React;
+const { useState, useEffect } = React;
+
+// localStorage に保存するときのキー
+const STORAGE_KEY = 'tasks';
+
+// 保存済みのタスクを読み込む（データが無い・壊れている場合は空配列）
+function loadTasks() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    const parsed = saved ? JSON.parse(saved) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
 
 // タスクを一意に識別するための ID を作る
 function createId() {
@@ -68,7 +82,17 @@ function TaskItem({ task, onToggle, onDelete }) {
 
 // アプリ全体
 function App() {
-  const [tasks, setTasks] = useState([]);
+  // 初回表示時だけ localStorage から読み込む
+  const [tasks, setTasks] = useState(loadTasks);
+
+  // タスクが変わるたびに localStorage に保存する
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+    } catch {
+      // プライベートブラウズなどで保存できない場合は何もしない
+    }
+  }, [tasks]);
 
   const addTask = (text) => {
     setTasks((prev) => [...prev, { id: createId(), text, done: false }]);
